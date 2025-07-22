@@ -53,4 +53,36 @@ from langchain_openai import ChatOpenAI
 llm = ChatOpenAI()
 
 ## RAG Chain code
+from langchain_core.runnables import RunnablePassthrough
+from langchain_core.output_parsers import StrOutputParser
 
+// joining all the relevent docs retriver found out
+def format_docs(docs):
+  return "\n".join(doc.page_content for doc in docs)
+
+//query
+rag_chain = ({"context" : retriever | format_docs, "question" : RunnablePassthrough()} // formating it and passing the context and question as prompt
+             | prompt //forming the prompt
+             | llm // passing to the llm
+             | StrOutputParser()) //parsing to output to display only the required content
+
+## Testing RAG Chain
+rag_chain.invoke("Are the recordings of the course available? For how long?")
+rag_chain.invoke("Are the certificates for the course provided?")
+
+##print prompt in RAG chain
+from langchain_core.runnables import RunnableLambda
+
+//creating custom function
+def print_prompt(prompt_text):
+  print("Prompt - ", prompt_text)
+  return prompt_text //because our llm is still expecting a prompt 
+
+rag_chain_with_print = ({"context" : retriever | format_docs, "question" : RunnablePassthrough()}
+             | prompt
+             | RunnableLambda(print_prompt)
+             | llm
+             | StrOutputParser())
+
+##
+rag_chain_with_print.invoke("What all projects are covered in the course?")
